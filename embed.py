@@ -8,7 +8,6 @@ from langchain_community.vectorstores import FAISS
 
 # Use environment variables for persistent storage paths.
 # On Render, you can mount your persistent disk at /data/uploads.
-# If no environment variable is set, the defaults will use the Render mount path.
 UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "/data/uploads")
 FAISS_INDEX_PATH = os.environ.get("FAISS_INDEX_PATH", "/data/uploads/faiss_index")
 
@@ -80,6 +79,11 @@ def embed_documents():
     # Create the FAISS vector store from the documents.
     print("[DEBUG] Creating FAISS vector store from document chunks...")
     vectorstore = FAISS.from_documents(all_documents, embeddings)
+
+    # Ensure the FAISS index directory exists.
+    if not os.path.exists(FAISS_INDEX_PATH):
+        print(f"[DEBUG] The FAISS index directory '{FAISS_INDEX_PATH}' does not exist. Creating it.")
+        os.makedirs(FAISS_INDEX_PATH, exist_ok=True)
 
     # Save the FAISS index locally using the persistent path.
     print(f"[DEBUG] Saving FAISS index to the '{FAISS_INDEX_PATH}' folder...")
