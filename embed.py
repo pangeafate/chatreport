@@ -30,7 +30,6 @@ def create_documents_from_pdf(file_path: str) -> list:
     Returns a list of Document objects.
     """
     text = parse_pdf_to_text(file_path)
-    # Create a text splitter with a chunk size of 3000 characters and an overlap of 300.
     print(f"[DEBUG] Splitting text from {file_path} into chunks...")
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=300)
     texts = text_splitter.split_text(text)
@@ -84,10 +83,18 @@ def embed_documents():
     if not os.path.exists(FAISS_INDEX_PATH):
         print(f"[DEBUG] The FAISS index directory '{FAISS_INDEX_PATH}' does not exist. Creating it.")
         os.makedirs(FAISS_INDEX_PATH, exist_ok=True)
-
+    
     # Save the FAISS index locally using the persistent path.
     print(f"[DEBUG] Saving FAISS index to the '{FAISS_INDEX_PATH}' folder...")
     vectorstore.save_local(FAISS_INDEX_PATH)
+    
+    # List the contents of the FAISS index directory.
+    try:
+        files = os.listdir(FAISS_INDEX_PATH)
+        print(f"[DEBUG] Files in FAISS index directory: {files}")
+    except Exception as e:
+        print(f"[ERROR] Could not list FAISS index directory: {e}")
+    
     print(f"[DEBUG] FAISS index saved to the '{FAISS_INDEX_PATH}' folder.")
 
 if __name__ == "__main__":
