@@ -1,0 +1,15 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment folder
+venv/
+
+# OS-specific files
+.DS_Store
+
+# Editor/IDE settings
+.vscode/
+.idea/
