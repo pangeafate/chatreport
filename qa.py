@@ -10,9 +10,12 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("Please set your OPENAI_API_KEY environment variable.")
 
+# Use the same environment variable as embed.py for the FAISS index path.
+FAISS_INDEX_PATH = os.environ.get("FAISS_INDEX_PATH", "/data/uploads/faiss_index")
+
 # Load the FAISS index using the same embeddings used for creation.
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
 
 # Create a RetrievalQA chain using a chain type that can process context properly.
 qa_chain = RetrievalQA.from_chain_type(
