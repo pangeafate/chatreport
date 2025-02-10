@@ -10,7 +10,11 @@ from embed import embed_documents  # Ensure your embed.py defines embed_document
 # NEW: Import answer_question at the top to avoid circular import issues.
 from qa import answer_question
 
-UPLOAD_FOLDER = 'uploads'
+# Use environment variables for persistent storage paths.
+# On Render, set UPLOAD_FOLDER to your persistent disk mount (e.g., "/data/uploads")
+# and FAISS_INDEX_PATH to where you want the FAISS index saved (e.g., "/data/uploads/faiss_index").
+UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
+FAISS_INDEX_PATH = os.environ.get("FAISS_INDEX_PATH", "faiss_index")
 ALLOWED_EXTENSIONS = {'pdf'}
 
 app = Flask(__name__)
@@ -39,6 +43,7 @@ def upload_file():
                 continue
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
+                # Ensure the upload folder exists.
                 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(file_path)
@@ -64,12 +69,12 @@ from langchain_community.vectorstores import FAISS
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 try:
-    vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+    vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
 except Exception as e:
     vectorstore = None
     print("Error loading FAISS index:", e)
 
-# Global status for embedding process
+# Global status for embedding process.
 embedding_status = {"running": False, "message": ""}
 
 def background_embedding():
@@ -77,8 +82,8 @@ def background_embedding():
     embedding_status["running"] = True
     try:
         embed_documents()  # Run the embedding process (this rebuilds the FAISS index)
-        # Reload vectorstore after embedding
-        vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+        # Reload vectorstore after embedding using the persistent FAISS index path.
+        vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
         embedding_status["message"] = "Embedding successful!"
     except Exception as e:
         embedding_status["message"] = f"Embedding error: {str(e)}"
@@ -107,7 +112,7 @@ def cancel_embedding():
     if embedding_status["running"]:
         embedding_status["running"] = False
         embedding_status["message"] = "Embedding cancelled."
-        # Optionally, delete uploaded files:
+        # Optionally, delete uploaded files.
         for f in os.listdir(UPLOAD_FOLDER):
             os.remove(os.path.join(UPLOAD_FOLDER, f))
         return {"status": "cancelled", "message": "Embedding cancelled and uploads removed."}
@@ -120,7 +125,7 @@ def embedding_status_route():
 
 @app.route('/qa', methods=['GET', 'POST'])
 def qa():
-    global vectorstore  # Ensure the global vectorstore is used
+    global vectorstore  # Ensure the global vectorstore is used.
     answer = None
     question = None
     sources = None
