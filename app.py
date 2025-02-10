@@ -7,14 +7,13 @@ from werkzeug.utils import secure_filename
 import threading
 from embed import embed_documents  # Ensure your embed.py defines embed_documents()
 
-# NEW: Import answer_question at the top to avoid circular import issues.
+# Import answer_question at the top to avoid circular import issues.
 from qa import answer_question
 
 # Use environment variables for persistent storage paths.
-# On Render, set UPLOAD_FOLDER to your persistent disk mount (e.g., "/data/uploads")
-# and FAISS_INDEX_PATH to where you want the FAISS index saved (e.g., "/data/uploads/faiss_index").
-UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
-FAISS_INDEX_PATH = os.environ.get("FAISS_INDEX_PATH", "faiss_index")
+# On Render, set UPLOAD_FOLDER and FAISS_INDEX_PATH appropriately.
+UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "/data/uploads")
+FAISS_INDEX_PATH = os.environ.get("FAISS_INDEX_PATH", "/data/uploads/faiss_index")
 ALLOWED_EXTENSIONS = {'pdf'}
 
 app = Flask(__name__)
@@ -68,6 +67,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# Try to load the FAISS index from the persistent path.
 try:
     vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
 except Exception as e:
