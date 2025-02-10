@@ -1,6 +1,9 @@
+import os
+# Disable tokenizers parallelism to avoid warnings about forking.
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from flask import Flask, request, redirect, url_for, flash, render_template
 from werkzeug.utils import secure_filename
-import os
 import threading
 from embed import embed_documents  # Ensure your embed.py defines embed_documents()
 

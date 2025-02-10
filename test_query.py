@@ -9,7 +9,7 @@ embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
 
 # Define a query to test retrieval.
-query = "What are the financial highlights?"
+query = "what they focused on in Artificial Intelligence Software and Hardware in Q2?"
 results = vectorstore.similarity_search(query, k=2)  # Retrieve the top 2 similar documents
 
 # Print the results

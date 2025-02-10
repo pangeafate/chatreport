@@ -10,9 +10,11 @@ def parse_pdf_to_text(file_path: str) -> str:
     """
     Parses the PDF file using unstructured.partition.pdf and returns the combined text.
     """
+    print(f"[DEBUG] Parsing PDF file: {file_path}")
     elements = partition_pdf(filename=file_path)
-    # Join together text from elements that have a text attribute
+    # Join together text from elements that have a text attribute.
     text = "\n".join([element.text for element in elements if hasattr(element, "text") and element.text])
+    print(f"[DEBUG] Extracted text length: {len(text)} characters")
     return text
 
 def create_documents_from_pdf(file_path: str) -> list:
@@ -21,43 +23,56 @@ def create_documents_from_pdf(file_path: str) -> list:
     Returns a list of Document objects.
     """
     text = parse_pdf_to_text(file_path)
-    # Create a text splitter with a chunk size of 500 characters and an overlap of 50.
-    # (Adjust these values as needed; if you prefer token counts, you might convert token counts to approximate character counts.)
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    # Create a text splitter with a chunk size of 1000 characters and an overlap of 200.
+    print(f"[DEBUG] Splitting text from {file_path} into chunks...")
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=300)
     texts = text_splitter.split_text(text)
-    # Create a Document for each chunk, tagging it with the source file name.
     documents = [Document(page_content=t, metadata={"source": os.path.basename(file_path)}) for t in texts]
+    print(f"[DEBUG] Created {len(documents)} document chunks from {os.path.basename(file_path)}")
     return documents
 
 def embed_documents():
     uploads_folder = "uploads"
+    
+    # Ensure the uploads folder exists.
+    if not os.path.exists(uploads_folder):
+        print(f"[DEBUG] The folder '{uploads_folder}' does not exist. Creating it.")
+        os.makedirs(uploads_folder)
+    else:
+        print(f"[DEBUG] Found uploads folder: '{uploads_folder}'")
+    
     all_documents = []
     
-    # Process each PDF file in the uploads folder.
-    for file in os.listdir(uploads_folder):
-        if file.lower().endswith(".pdf"):
-            file_path = os.path.join(uploads_folder, file)
-            print(f"Processing {file}...")
-            try:
-                docs = create_documents_from_pdf(file_path)
-                print(f"Created {len(docs)} document chunks from {file}.")
-                all_documents.extend(docs)
-            except Exception as e:
-                print(f"Error processing {file}: {e}")
+    # List all files in the uploads folder.
+    pdf_files = [file for file in os.listdir(uploads_folder) if file.lower().endswith(".pdf")]
+    print(f"[DEBUG] Found {len(pdf_files)} PDF file(s) in '{uploads_folder}': {pdf_files}")
+    
+    # Process each PDF file.
+    for file in pdf_files:
+        file_path = os.path.join(uploads_folder, file)
+        print(f"[DEBUG] Processing file: {file_path}")
+        try:
+            docs = create_documents_from_pdf(file_path)
+            all_documents.extend(docs)
+        except Exception as e:
+            print(f"[ERROR] Error processing {file}: {e}")
     
     if not all_documents:
-        print("No documents found for embedding.")
+        print("[DEBUG] No PDF documents found for embedding.")
         return
 
-    # Initialize embeddings using a Sentence Transformers model via HuggingFaceEmbeddings.
+    # Initialize embeddings.
+    print("[DEBUG] Initializing embeddings using model 'all-MiniLM-L6-v2'...")
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     
     # Create the FAISS vector store from the documents.
+    print("[DEBUG] Creating FAISS vector store from document chunks...")
     vectorstore = FAISS.from_documents(all_documents, embeddings)
     
     # Save the FAISS index locally.
+    print("[DEBUG] Saving FAISS index to the 'faiss_index' folder...")
     vectorstore.save_local("faiss_index")
-    print("FAISS index saved to the 'faiss_index' folder.")
+    print("[DEBUG] FAISS index saved to the 'faiss_index' folder.")
 
 if __name__ == "__main__":
     embed_documents()

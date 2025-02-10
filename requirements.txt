@@ -24,6 +24,8 @@ filetype==1.2.0
 Flask==3.1.0
 frozenlist==1.5.0
 future==0.18.2
+gunicorn==20.1.0
+pdfminer.six==20240706
 h11==0.14.0
 html5lib==1.1
 httpcore==1.0.7
@@ -85,3 +87,14 @@ wrapt==1.17.2
 yarl==1.18.3
 zipp==3.21.0
 zstandard==0.23.0
+pi-heif==0.21.0
+unstructured-inference==0.8.7
+langchain-community==0.3.17
+pdf2image==1.16.3
+sentence-transformers==2.2.2
+huggingface-hub==0.14.1
+faiss-cpu==1.7.3
+openai==0.27.0
+tiktoken==0.3.3
+pytesseract==0.3.10
+unstructured-pytesseract==0.3.13
