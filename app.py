@@ -66,14 +66,21 @@ def parse_file(filename):
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
+# Initialize embeddings.
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+# Ensure the FAISS index directory exists.
+if not os.path.exists(FAISS_INDEX_PATH):
+    os.makedirs(FAISS_INDEX_PATH, exist_ok=True)
+
+# Attempt to load the FAISS index.
 try:
     vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
 except Exception as e:
     vectorstore = None
     print("Error loading FAISS index:", e)
 
-# Global status for embedding process.
+# Global status for the embedding process.
 embedding_status = {"running": False, "message": ""}
 
 def background_embedding():
@@ -81,7 +88,7 @@ def background_embedding():
     embedding_status["running"] = True
     try:
         embed_documents()  # Run the embedding process (this rebuilds the FAISS index)
-        # Reload vectorstore after embedding using the persistent FAISS index path.
+        # Reload the vectorstore after embedding using the persistent FAISS index path.
         vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
         embedding_status["message"] = "Embedding successful!"
     except Exception as e:
@@ -124,7 +131,7 @@ def embedding_status_route():
 
 @app.route('/qa', methods=['GET', 'POST'])
 def qa():
-    global vectorstore  # Ensure the global vectorstore is used.
+    global vectorstore
     answer = None
     question = None
     sources = None
@@ -137,7 +144,7 @@ def qa():
             if hasattr(vectorstore.docstore, "docs"):
                 all_docs = list(vectorstore.docstore.docs.values())
             else:
-                # Fallback: iterate over the internal __dict__ and filter for document-like objects.
+                # Fallback: iterate over vectorstore.docstore.__dict__ and filter for document-like objects.
                 for value in vectorstore.docstore.__dict__.values():
                     if isinstance(value, dict):
                         for doc in value.values():
