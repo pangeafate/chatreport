@@ -7,7 +7,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 # Use environment variables for persistent storage paths.
-# On Render, you can mount your persistent disk at /data/uploads.
+# On Render, mount your persistent disk at /data/uploads.
 UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "/data/uploads")
 FAISS_INDEX_PATH = os.environ.get("FAISS_INDEX_PATH", "/data/uploads/faiss_index")
 
@@ -48,7 +48,7 @@ def embed_documents():
     # Ensure the uploads folder exists.
     if not os.path.exists(uploads_folder):
         print(f"[DEBUG] The folder '{uploads_folder}' does not exist. Creating it.")
-        os.makedirs(uploads_folder)
+        os.makedirs(uploads_folder, exist_ok=True)
     else:
         print(f"[DEBUG] Found uploads folder: '{uploads_folder}'")
 
