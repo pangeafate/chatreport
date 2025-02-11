@@ -36,7 +36,7 @@ vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_des
 qa_chain = RetrievalQA.from_chain_type(
     llm=ChatOpenAI(model="gpt-4", temperature=0, max_tokens=500),
     chain_type="stuff",  # Ensure you use the appropriate chain type.
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
+    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
 )
 
 def answer_question(question: str) -> tuple[str, list[str]]:
@@ -45,7 +45,7 @@ def answer_question(question: str) -> tuple[str, list[str]]:
     and return the answer along with a list of source files.
     """
     # Retrieve the relevant documents from the vectorstore.
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
     relevant_docs = retriever.get_relevant_documents(question)
     
     # Extract unique source file names from the metadata.
