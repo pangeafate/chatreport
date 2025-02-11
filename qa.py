@@ -35,7 +35,7 @@ vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_des
 # Create a RetrievalQA chain using a chain type that can process context properly.
 qa_chain = RetrievalQA.from_chain_type(
     llm=ChatOpenAI(model="gpt-4", temperature=0, max_tokens=500),
-    chain_type="refine",  # Ensure you use the appropriate chain type.
+    chain_type="stuff",  # Ensure you use the appropriate chain type.
     retriever=vectorstore.as_retriever(search_kwargs={"k": 10}),
 )
 
