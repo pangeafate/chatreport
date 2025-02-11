@@ -1,4 +1,3 @@
-# embed.py
 import os
 from unstructured.partition.pdf import partition_pdf
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -41,61 +40,77 @@ def create_documents_from_pdf(file_path: str) -> list:
     return documents
 
 def embed_documents():
-    # Use the persistent uploads folder path.
     uploads_folder = UPLOAD_FOLDER
 
-    # Ensure the uploads folder exists.
     if not os.path.exists(uploads_folder):
         print(f"[DEBUG] The folder '{uploads_folder}' does not exist. Creating it.")
         os.makedirs(uploads_folder, exist_ok=True)
     else:
         print(f"[DEBUG] Found uploads folder: '{uploads_folder}'")
 
-    all_documents = []
+    # Define the tracking file to store processed PDF filenames.
+    processed_files_path = os.path.join(uploads_folder, "processed_files.txt")
+    processed_files = []
+    if os.path.exists(processed_files_path):
+        with open(processed_files_path, "r") as f:
+            processed_files = [line.strip() for line in f.readlines() if line.strip()]
+    print(f"[DEBUG] Already processed files: {processed_files}")
 
-    # List all PDF files in the uploads folder.
-    pdf_files = [file for file in os.listdir(uploads_folder) if file.lower().endswith(".pdf")]
-    print(f"[DEBUG] Found {len(pdf_files)} PDF file(s) in '{uploads_folder}': {pdf_files}")
+    # List all PDFs in the uploads folder.
+    all_pdf_files = [file for file in os.listdir(uploads_folder) if file.lower().endswith(".pdf")]
+    # Filter out PDFs that have already been processed.
+    new_pdf_files = [file for file in all_pdf_files if file not in processed_files]
+    print(f"[DEBUG] Found {len(new_pdf_files)} new PDF file(s) in '{uploads_folder}': {new_pdf_files}")
 
-    # Process each PDF file.
-    for file in pdf_files:
+    new_documents = []
+    # Process each new PDF file.
+    for file in new_pdf_files:
         file_path = os.path.join(uploads_folder, file)
-        print(f"[DEBUG] Processing file: {file_path}")
+        print(f"[DEBUG] Processing new file: {file_path}")
         try:
             docs = create_documents_from_pdf(file_path)
-            all_documents.extend(docs)
+            new_documents.extend(docs)
         except Exception as e:
             print(f"[ERROR] Error processing {file}: {e}")
 
-    if not all_documents:
-        print("[DEBUG] No PDF documents found for embedding.")
+    if not new_documents:
+        print("[DEBUG] No new document chunks found for embedding.")
         return
 
-    # Initialize embeddings.
     print("[DEBUG] Initializing embeddings using model 'all-MiniLM-L6-v2'...")
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-    # Create the FAISS vector store from the documents.
-    print("[DEBUG] Creating FAISS vector store from document chunks...")
-    vectorstore = FAISS.from_documents(all_documents, embeddings)
+    # Check if an existing FAISS index exists.
+    index_file = os.path.join(FAISS_INDEX_PATH, "index.faiss")
+    if os.path.exists(index_file):
+        print("[DEBUG] Loading existing FAISS index...")
+        vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
+        print("[DEBUG] Adding new documents to the existing FAISS index...")
+        vectorstore.add_documents(new_documents)
+    else:
+        print("[DEBUG] No existing FAISS index found. Creating a new one from new documents...")
+        vectorstore = FAISS.from_documents(new_documents, embeddings)
 
-    # Ensure the FAISS index directory exists.
     if not os.path.exists(FAISS_INDEX_PATH):
         print(f"[DEBUG] The FAISS index directory '{FAISS_INDEX_PATH}' does not exist. Creating it.")
         os.makedirs(FAISS_INDEX_PATH, exist_ok=True)
-    
-    # Save the FAISS index locally using the persistent path.
+
     print(f"[DEBUG] Saving FAISS index to the '{FAISS_INDEX_PATH}' folder...")
     vectorstore.save_local(FAISS_INDEX_PATH)
-    
-    # List the contents of the FAISS index directory.
+
+    # Update the tracking file with the newly processed PDFs.
+    with open(processed_files_path, "a") as f:
+        for file in new_pdf_files:
+            f.write(file + "\n")
+    print(f"[DEBUG] Updated processed files list saved to {processed_files_path}")
+
     try:
         files = os.listdir(FAISS_INDEX_PATH)
         print(f"[DEBUG] Files in FAISS index directory: {files}")
     except Exception as e:
         print(f"[ERROR] Could not list FAISS index directory: {e}")
-    
-    print(f"[DEBUG] FAISS index saved to the '{FAISS_INDEX_PATH}' folder.")
+
+    print(f"[DEBUG] FAISS index updated and saved to the '{FAISS_INDEX_PATH}' folder.")
 
 if __name__ == "__main__":
     embed_documents()
