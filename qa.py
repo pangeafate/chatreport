@@ -35,22 +35,18 @@ vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_des
 # Create a RetrievalQA chain using a chain type that can process context properly.
 qa_chain = RetrievalQA.from_chain_type(
     llm=ChatOpenAI(model="gpt-4", temperature=0, max_tokens=500),
-    chain_type="stuff",  # Ensure you use the appropriate chain type.
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+    chain_type="refine",  # Ensure you use the appropriate chain type.
+    retriever=vectorstore.as_retriever(search_kwargs={"k": 10}),
 )
 
 def answer_question(question: str) -> tuple[str, list[str]]:
-    """
-    Given a question, retrieve relevant documents, extract source file names,
-    and return the answer along with a list of source files.
-    """
-    # Retrieve the relevant documents from the vectorstore.
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
     relevant_docs = retriever.get_relevant_documents(question)
     
-    # Extract unique source file names from the metadata.
-    sources = list({doc.metadata.get("source", "unknown") for doc in relevant_docs})
+    # Log details of the retrieved documents
+    for idx, doc in enumerate(relevant_docs):
+        print(f"[DEBUG] Retrieved chunk {idx + 1}: Source: {doc.metadata.get('source')}, Content snippet: {doc.page_content[:100]}")
     
-    # Generate the answer using the QA chain.
+    sources = list({doc.metadata.get("source", "unknown") for doc in relevant_docs})
     answer = qa_chain.run(question)
     return answer, sources

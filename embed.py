@@ -30,7 +30,7 @@ def create_documents_from_pdf(file_path: str) -> list:
     """
     text = parse_pdf_to_text(file_path)
     print(f"[DEBUG] Splitting text from {file_path} into chunks...")
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
     texts = text_splitter.split_text(text)
     documents = [
         Document(page_content=t, metadata={"source": os.path.basename(file_path)})
