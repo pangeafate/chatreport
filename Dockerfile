@@ -6,8 +6,9 @@ WORKDIR /app
 
 # Install required system packages: poppler-utils (for pdf2image),
 # libgl1-mesa-glx (for OpenCV), and libglib2.0-0 (for libgthread-2.0.so.0).
+# Also install tesseract-ocr for OCR functionality.
 RUN apt-get update && \
-    apt-get install -y poppler-utils libgl1-mesa-glx libglib2.0-0 && \
+    apt-get install -y poppler-utils libgl1-mesa-glx libglib2.0-0 tesseract-ocr && \
     rm -rf /var/lib/apt/lists/*
 
 # Set environment variable to disable parallelism in tokenizers.
