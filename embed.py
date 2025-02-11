@@ -56,6 +56,12 @@ def embed_documents():
             processed_files = [line.strip() for line in f.readlines() if line.strip()]
     print(f"[DEBUG] Already processed files: {processed_files}")
 
+    # Check if the FAISS index exists; if not, reset processed_files so all PDFs are processed.
+    index_file = os.path.join(FAISS_INDEX_PATH, "index.faiss")
+    if not os.path.exists(index_file):
+        print(f"[DEBUG] FAISS index file not found at {index_file}. Rebuilding index from scratch.")
+        processed_files = []
+
     # List all PDFs in the uploads folder.
     all_pdf_files = [file for file in os.listdir(uploads_folder) if file.lower().endswith(".pdf")]
     # Filter out PDFs that have already been processed.
@@ -81,7 +87,6 @@ def embed_documents():
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
     # Check if an existing FAISS index exists.
-    index_file = os.path.join(FAISS_INDEX_PATH, "index.faiss")
     if os.path.exists(index_file):
         print("[DEBUG] Loading existing FAISS index...")
         vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
