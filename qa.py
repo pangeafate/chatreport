@@ -36,7 +36,7 @@ vectorstore = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_des
 qa_chain = RetrievalQA.from_chain_type(
     llm=ChatOpenAI(model="gpt-4", temperature=0, max_tokens=500),
     chain_type="stuff",  # Ensure you use the appropriate chain type.
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 2}),
+    retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
 )
 
 def answer_question(question: str) -> tuple[str, list[str]]:
