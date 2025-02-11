@@ -45,7 +45,7 @@ def answer_question(question: str) -> tuple[str, list[str]]:
     and return the answer along with a list of source files.
     """
     # Retrieve the relevant documents from the vectorstore.
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     relevant_docs = retriever.get_relevant_documents(question)
     
     # Extract unique source file names from the metadata.
